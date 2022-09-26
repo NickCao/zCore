@@ -18,6 +18,7 @@
             wget
             qemu
             cargo-binutils
+            rust-analyzer
           ];
         };
       }
