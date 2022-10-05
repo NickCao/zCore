@@ -10,8 +10,8 @@ use rcore_fs::vfs::*;
 pub trait ShadowRPC: Sync + Send {
     // query node number
     fn id(&self) -> Result<usize>;
-    // register inode as local
-    fn register(&self, inode: usize) -> Result<()>;
+    // allocate inode as local
+    fn allocate(&self) -> Result<usize>;
     // locate a remote inode
     fn locate(&self, inode: usize) -> Result<Option<usize>>;
 }
@@ -19,15 +19,18 @@ pub trait ShadowRPC: Sync + Send {
 #[derive(Default)]
 pub struct ShadowRPCMock {
     mapping: Mutex<BTreeMap<usize, usize>>,
+    current: Mutex<usize>,
 }
 
 impl ShadowRPC for ShadowRPCMock {
     fn id(&self) -> Result<usize> {
         Ok(1)
     }
-    fn register(&self, inode: usize) -> Result<()> {
-        self.mapping.lock().insert(inode, 1);
-        Ok(())
+    fn allocate(&self) -> Result<usize> {
+        let mut current = self.current.lock();
+        *current += 1;
+        self.mapping.lock().insert(1, *current);
+        Ok(*current)
     }
     fn locate(&self, inode: usize) -> Result<Option<usize>> {
         Ok(self.mapping.lock().get(&inode).map(|i| *i))
