@@ -6,8 +6,8 @@ mod ioctl;
 mod pipe;
 mod pseudo;
 pub mod rcore_fs_wrapper;
-mod stdio;
 pub mod shadow;
+mod stdio;
 
 #[cfg(feature = "mock-disk")]
 pub mod mock;
@@ -50,6 +50,8 @@ pub use file::{File, OpenFlags, PollEvents, SeekFrom};
 pub use pipe::Pipe;
 pub use rcore_fs::vfs::{self, PollStatus};
 pub use stdio::{STDIN, STDOUT};
+
+use self::shadow::ShadowFS;
 
 #[async_trait]
 /// Generic file interface
@@ -211,6 +213,14 @@ pub fn create_root_fs(rootfs: Arc<dyn FileSystem>) -> Arc<dyn INode> {
             .expect("failed to mkdir /tmp")
     });
     tmp.mount(ramfs).expect("failed to mount RamFS");
+
+    let store = RamFS::new(); // TODO: use persistent store
+    let shadowfs = ShadowFS::new(store);
+    let share = root.find(true, "share").unwrap_or_else(|_| {
+        root.create("share", FileType::Dir, 0o666)
+            .expect("failed to mkdir /share")
+    });
+    share.mount(shadowfs).expect("failed to mount ShadowFS");
 
     root
 }

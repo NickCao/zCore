@@ -6,6 +6,30 @@ use core::any::Any;
 use lock::Mutex;
 use rcore_fs::vfs::*;
 
+pub struct ShadowFS {
+    store: Arc<dyn FileSystem>,
+}
+
+impl ShadowFS {
+    pub fn new(store: Arc<dyn FileSystem>) -> Arc<Self> {
+        Arc::new(Self { store })
+    }
+}
+
+impl FileSystem for ShadowFS {
+    fn sync(&self) -> Result<()> {
+        // TODO: also sync remote stores
+        self.store.sync()
+    }
+    fn info(&self) -> FsInfo {
+        self.store.info()
+    }
+    fn root_inode(&self) -> Arc<dyn INode> {
+        // TODO: fetchfroot inode from master
+        Arc::new(ShadowINode::new(self.store.root_inode()))
+    }
+}
+
 /// shadow INode data struct
 pub struct ShadowINodeData {
     inner: Arc<dyn INode>,
