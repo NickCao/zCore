@@ -1,18 +1,48 @@
 //! Implement INode for ShadowINode
 
+use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use core::any::Any;
 
 use lock::Mutex;
 use rcore_fs::vfs::*;
 
+pub trait ShadowRPC: Sync + Send {
+    // query node number
+    fn id(&self) -> Result<usize>;
+    // register inode as local
+    fn register(&self, inode: usize) -> Result<()>;
+    // locate a remote inode
+    fn locate(&self, inode: usize) -> Result<Option<usize>>;
+}
+
+#[derive(Default)]
+pub struct ShadowRPCMock {
+    mapping: Mutex<BTreeMap<usize, usize>>,
+}
+
+impl ShadowRPC for ShadowRPCMock {
+    fn id(&self) -> Result<usize> {
+        Ok(1)
+    }
+    fn register(&self, inode: usize) -> Result<()> {
+        self.mapping.lock().insert(inode, 1);
+        Ok(())
+    }
+    fn locate(&self, inode: usize) -> Result<Option<usize>> {
+        Ok(self.mapping.lock().get(&inode).map(|i| *i))
+    }
+}
+
+#[allow(dead_code)]
 pub struct ShadowFS {
     store: Arc<dyn FileSystem>,
+    master: Arc<dyn ShadowRPC>,
 }
 
 impl ShadowFS {
-    pub fn new(store: Arc<dyn FileSystem>) -> Arc<Self> {
-        Arc::new(Self { store })
+    pub fn new(store: Arc<dyn FileSystem>, master: Arc<dyn ShadowRPC>) -> Arc<Self> {
+        Arc::new(Self { store, master })
     }
 }
 

@@ -51,7 +51,7 @@ pub use pipe::Pipe;
 pub use rcore_fs::vfs::{self, PollStatus};
 pub use stdio::{STDIN, STDOUT};
 
-use self::shadow::ShadowFS;
+use self::shadow::{ShadowFS, ShadowRPCMock};
 
 #[async_trait]
 /// Generic file interface
@@ -215,7 +215,7 @@ pub fn create_root_fs(rootfs: Arc<dyn FileSystem>) -> Arc<dyn INode> {
     tmp.mount(ramfs).expect("failed to mount RamFS");
 
     let store = RamFS::new(); // TODO: use persistent store
-    let shadowfs = ShadowFS::new(store);
+    let shadowfs = ShadowFS::new(store, Arc::new(ShadowRPCMock::default()));
     let share = root.find(true, "share").unwrap_or_else(|_| {
         root.create("share", FileType::Dir, 0o666)
             .expect("failed to mkdir /share")
