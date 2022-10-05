@@ -11,7 +11,7 @@ pub struct ShadowINodeData {
     inner: Arc<dyn INode>,
 }
 
-/// random INode struct
+/// shadow INode struct
 #[derive(Clone)]
 pub struct ShadowINode {
     data: Arc<Mutex<ShadowINodeData>>,
@@ -64,7 +64,10 @@ impl INode for ShadowINode {
     }
 
     fn create(&self, name: &str, type_: FileType, mode: u32) -> Result<Arc<dyn INode>> {
-        self.data.lock().inner.create(name, type_, mode)
+        match self.data.lock().inner.create(name, type_, mode) {
+            Ok(i) => Ok(Arc::new(ShadowINode::new(i))),
+            e => e,
+        }
     }
 
     fn create2(
@@ -74,7 +77,10 @@ impl INode for ShadowINode {
         mode: u32,
         data: usize,
     ) -> Result<Arc<dyn INode>> {
-        self.data.lock().inner.create2(name, type_, mode, data)
+        match self.data.lock().inner.create2(name, type_, mode, data) {
+            Ok(i) => Ok(Arc::new(ShadowINode::new(i))),
+            e => e,
+        }
     }
 
     fn link(&self, name: &str, other: &Arc<dyn INode>) -> Result<()> {
@@ -90,7 +96,10 @@ impl INode for ShadowINode {
     }
 
     fn find(&self, name: &str) -> Result<Arc<dyn INode>> {
-        self.data.lock().inner.find(name)
+        match self.data.lock().inner.find(name) {
+            Ok(i) => Ok(Arc::new(ShadowINode::new(i))),
+            e => e,
+        }
     }
 
     fn get_entry(&self, id: usize) -> Result<alloc::string::String> {
