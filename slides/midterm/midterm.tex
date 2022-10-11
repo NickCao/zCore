@@ -92,5 +92,20 @@ The whole VFS interface, served over the network
   Messages are exchanged over TCP as a sequence of TLV, for simplicity of implementation, in a request and response manner
 \end{block}
 \end{frame}
-  
+
+\section{Impl}
+\begin{frame}
+\frametitle{Distributed Operating System}
+\begin{exampleblock}{zCore}
+  \begin{itemize}
+    \item a zicron like microkernel, a natural fit for a distributed operating system
+    \item has a e1000 network adaptor driver and a netstack based on smoltcp
+    \item uses the same VFS abstraction as rCore, making the final implementation applicable to the mass
+    \item more well-maintained compared to rCore
+  \end{itemize}
+\end{exampleblock}
+\end{frame}
+
+\section{}
+\frame{\titlepage}
 \end{document}
