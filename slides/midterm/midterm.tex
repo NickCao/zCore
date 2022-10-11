@@ -57,14 +57,40 @@ The view of the system is built upon three principles. First, resources are name
 
 \begin{frame}
 \frametitle{Distributed Filesystem}
-\framesubtitle{Internals}
+\framesubtitle{Identifier allocation}
 \begin{verse}
   All distrubuted systems, however designed, need means for syncronization, just some of them need less, by keeping resources local.
 \end{verse}
 \begin{itemize}
-  \item all nodes are allocated an unique node number on bootup
+  \item all nodes are allocated an unique node number on creation
   \item inode numbers are allocated locally, as a combination of node number and a sequence number
+  \item local inodes are accessed as-is
+  \item remote inodes are self-descriptive, the target node can be located without coordination
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{File handle}
+\begin{quotation}
+  There are 2 hard problems in computer science: cache invalidation, naming things, and off-by-1 errors.
+  \flushright - Leon Bambrick
+\end{quotation}
+Inode themselves, are local states, but file handles, are not. Just google ``nfs stale file handle'', and you will get 137,000 results. File handles, are just caches of the presence of specific inodes.
+
+But there is a simple solution: like NFS, we just fail.
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Remote procedure call}
+The whole VFS interface, served over the network
+\begin{block}{Message}
+  We use protobuf, a language-neutral, platform-neutral, extensible mechanism for serializing structured data, to encode messages
+\end{block}
+\begin{block}{Exchange}
+  Messages are exchanged over TCP as a sequence of TLV, for simplicity of implementation, in a request and response manner
+\end{block}
 \end{frame}
   
 \end{document}
