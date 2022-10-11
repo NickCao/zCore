@@ -1,0 +1,70 @@
+\documentclass{ctexbeamer}
+
+\usetheme{Berkeley}
+
+\title{Distributed Operating System}
+\subtitle{Filesystem actually}
+
+\author{曹隽诚 \and 李晋}
+\date{2022年10月13日}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{Introduction}
+
+\begin{frame}
+\frametitle{Distributed Operating System}
+\framesubtitle{Plan 9 from Bell Labs}
+\begin{quotation}
+The view of the system is built upon three principles. First, resources are named and accessed like files in a hierarchical file system. Second, there is a standard protocol, called 9P, for accessing these resources. Third, the disjoint hierarchies provided by different services are joined together into a single private hierarchical file name space.
+\end{quotation}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Operating System}
+\framesubtitle{Transparency}
+\begin{itemize}
+  \item files (files are just, files)
+  \item inter-process communication (unix domain socket)
+  \item process management (procfs)
+\end{itemize}
+\begin{block}{Takeaway}
+  Not everything is a file, everything is accessed as a file
+
+  A distributed operating system is just a distributed filesystem
+\end{block}
+\end{frame}
+
+\section{Design}
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Interface}
+\begin{block}{VFS (virtual file system)}
+  \begin{itemize}
+    \item allow processes to access local, remote or any filesystem transparently over an consistent \emph{interface}
+    \item VFS in Linux takes an inode based design
+  \end{itemize}
+\end{block}
+\begin{block}{inode}
+  \begin{itemize}
+    \item an inode can be a regular file, a directory, a FIFO, a device or any other beasts
+    \item within a filesystem, every inode has a \emph{unique} inode number
+    \item inode numbers are allocated by the filesystem, and has no meaning other than an opaque identifier to the processes
+  \end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Internals}
+\begin{verse}
+  All distrubuted systems, however designed, need means for syncronization, just some of them need less, by keeping resources local.
+\end{verse}
+\begin{itemize}
+  \item all nodes are allocated an unique node number on bootup
+  \item inode numbers are allocated locally, as a combination of node number and a sequence number
+\end{itemize}
+\end{frame}
+  
+\end{document}
