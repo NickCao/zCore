@@ -5,6 +5,7 @@
 **/target
 *.bin
 *.img
+*.dat
 
 /ignored
 /rootfs

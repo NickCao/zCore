@@ -2485,6 +2485,7 @@ dependencies = [
  "rcore-fs-sfs",
  "riscv 0.8.0",
  "sbi-rt",
+ "smoltcp",
  "spin 0.9.4",
  "zcore-loader",
  "zircon-object",

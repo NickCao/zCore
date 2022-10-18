@@ -140,6 +140,10 @@ impl QemuArgs {
             .args(&["-display", "none"])
             .arg("-no-reboot")
             .arg("-nographic")
+            // .args(&["-netdev", "user,id=net1,guestfwd=tcp:10.0.2.100:1234-tcp:127.0.0.1:1234"])
+            .args(&["-netdev", "user,id=net1,hostfwd=tcp::1234-:1234"])
+            .args(&["-device", "e1000e,netdev=net1"])
+            .args(&["-object", "filter-dump,id=f1,netdev=net1,file=dump.dat"])
             .optional(&self.smp, |qemu, smp| {
                 qemu.args(&["-smp", &smp.to_string()]);
             });

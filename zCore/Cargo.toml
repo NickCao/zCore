@@ -67,6 +67,21 @@ rcore-fs = { git = "https://github.com/rcore-os/rcore-fs", rev = "1a3246b", opti
 rcore-fs-sfs = { git = "https://github.com/rcore-os/rcore-fs", rev = "1a3246b", optional = true }
 lock = { git = "https://github.com/DeathWish5/kernel-sync", rev = "8486b8" }
 executor = { git = "https://github.com/DeathWish5/PreemptiveScheduler", rev = "e8cd353" }
+smoltcp = { git = "https://github.com/smoltcp-rs/smoltcp", rev = "35e833e3", default-features = false, features = [
+    "log",
+    "alloc",
+    "verbose",
+    "proto-ipv4",
+    "proto-ipv6",
+    "proto-igmp",
+    "medium-ip",
+    "medium-ethernet",
+    "socket-raw",
+    "socket-udp",
+    "socket-tcp",
+    "socket-icmp",
+    "async",
+] }
 
 # LibOS mode
 [target.'cfg(not(target_os = "none"))'.dependencies]
