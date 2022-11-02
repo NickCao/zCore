@@ -5,6 +5,7 @@ use zircon_object::{object::KernelObject, task::Process};
 pub struct BootOptions {
     pub cmdline: String,
     pub log_level: String,
+    pub ip_index: usize,
     #[cfg(feature = "linux")]
     pub root_proc: String,
 }
@@ -46,6 +47,7 @@ pub fn boot_options() -> BootOptions {
             BootOptions {
                 cmdline,
                 log_level,
+                ip_index: 0,
                 #[cfg(feature = "linux")]
                 root_proc: args[1..].join("?"),
             }
@@ -56,6 +58,7 @@ pub fn boot_options() -> BootOptions {
             BootOptions {
                 cmdline: cmdline.clone(),
                 log_level: options.get("LOG").unwrap_or(&"").to_string(),
+                ip_index: options.get("IP").unwrap_or(&"0").to_string().parse::<usize>().unwrap_or(0),
                 #[cfg(feature = "linux")]
                 root_proc: options.get("ROOTPROC").unwrap_or(&"/bin/busybox?sh").to_string(),
             }

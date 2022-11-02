@@ -6,8 +6,12 @@
 
 use core::sync::atomic::{AtomicBool, Ordering};
 // use linux_object::error::SysResult;
-use linux_object::{
-    net::*,
+use linux_object::net::{
+    SocketType,
+    TcpSocketState,
+    SOCKET_TYPE_MASK,
+    Endpoint,
+    Socket,
 };
 use linux_object::fs::{FileLike, OpenFlags};
 use smoltcp::wire::IpEndpoint;
@@ -41,18 +45,18 @@ static MOCK_CORE: AtomicBool = AtomicBool::new(false);
 #[allow(dead_code)]
 async fn test_connect() {
     println!("test connect:"); 
-    let socket = TcpSocketState::new();
+    let socket: TcpSocketState = TcpSocketState::new();
     let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
     println!("done set_flags"); 
     let endpoint = Endpoint::Ip(IpEndpoint::new(
-        IpAddress::v4(10,0,2,100),
+        IpAddress::v4(10,0,2,15),
         1234,
     ));
     println!("done ip set"); 
     let _result_connect = socket.connect(endpoint).await;
-    let str = "hello world";
+    let str = "hello";
     let result_write = FileLike::write(&socket, str.as_bytes());
-    println!("done write"); 
+    println!("done send hello"); 
     let mut data = [0u8; 32];
     info!("<= {:?}", result_write);
     let _result_read = FileLike::read(&socket, &mut data).await;
@@ -62,7 +66,7 @@ async fn test_connect() {
 #[allow(dead_code)]
 async fn test_bind() {
     println!("test bind:"); 
-    let socket = TcpSocketState::new();
+    let socket: TcpSocketState = TcpSocketState::new();
     let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
     println!("done set_flags"); 
     let endpoint = Endpoint::Ip(IpEndpoint::new(
@@ -84,6 +88,9 @@ async fn test_bind() {
     let read_file = re_ac.clone();
     let _result_read = FileLike::read(& *read_file, &mut data).await;
     println!("{}", String::from_utf8(data.to_vec()).unwrap());
+    let str = "world";
+    let _result_write = FileLike::write(& *read_file, str.as_bytes());
+    println!("done send world"); 
 }
 
 fn primary_main(config: kernel_hal::KernelConfig) {
@@ -91,12 +98,19 @@ fn primary_main(config: kernel_hal::KernelConfig) {
     memory::init_heap();
     kernel_hal::primary_init_early(config, &handler::ZcoreKernelHandler);
     let options = utils::boot_options();
+    info!("IP index: {}",options.ip_index);
     logging::set_max_level(&options.log_level);
     info!("Boot options: {:#?}", options);
     memory::init_frame_allocator(&kernel_hal::mem::free_pmem_regions());
     kernel_hal::primary_init();
     STARTED.store(true, Ordering::SeqCst);
-    // executor::spawn(test_bind());
+    if options.ip_index > 0 {
+        if options.ip_index == 1 {
+            executor::spawn(test_bind());
+        } else {
+            executor::spawn(test_connect());
+        }
+    }
     cfg_if! {
         if #[cfg(all(feature = "linux", feature = "zircon"))] {
             panic!("Feature `linux` and `zircon` cannot be enabled at the same time!");
