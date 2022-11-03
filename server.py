@@ -15,13 +15,16 @@ server.listen(5)
 print("[*] Listening on %s:%d" % (bind_ip,bind_port))
 
 def handle_client(client_socket):
+    while True:
+        request = client_socket.recv(1024)
 
-    request = client_socket.recv(1024)
-
-    print("[*] Received: %s " % request)
-
-    client_socket.send("ACK!".encode())
-    # client_socket.close()
+        print("[*] Received: %s " % request)
+        if request == b'EOF':
+            break
+        client_socket.send("ACK!".encode())
+    
+    client_socket.close()
+    print("[*] Close client")
 
 
 while True:

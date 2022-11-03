@@ -46,22 +46,33 @@ static MOCK_CORE: AtomicBool = AtomicBool::new(false);
 async fn test_connect() {
     println!("test connect:"); 
     let socket: TcpSocketState = TcpSocketState::new();
-    let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
-    println!("done set_flags"); 
+    // let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
+    // println!("done set_flags"); 
     let endpoint = Endpoint::Ip(IpEndpoint::new(
         IpAddress::v4(10,0,2,16),
         1234,
     ));
     println!("done ip set"); 
     let _result_connect = socket.connect(endpoint).await;
-    let str = "hello\r\n";
+    let str = "hello";
     let result_write = FileLike::write(&socket, str.as_bytes());
-    println!("done send hello"); 
-    // let mut data = [0u8; 100];
-    info!("<= {:?}", result_write);
-    loop{}
-    // let _result_read = FileLike::read(&socket, &mut data).await;
-    // println!("{}", String::from_utf8(data.to_vec()).unwrap());
+    println!("send: hello"); 
+    info!("write error<= {:?}", result_write);
+    let mut data = [0u8; 100];
+    let _result_read = FileLike::read(&socket, &mut data).await;
+    println!("recv: {}", String::from_utf8(data.to_vec()).unwrap());
+    let str = "hello";
+    let result_write = FileLike::write(&socket, str.as_bytes());
+    println!("send: hello"); 
+    info!("write error <= {:?}", result_write);
+    let mut data = [0u8; 100];
+    let result_read = FileLike::read(&socket, &mut data).await;
+    println!("read error <= {:?}", result_read);
+    println!("recv: {}", String::from_utf8(data.to_vec()).unwrap());
+    let str = "EOF";
+    let result_write = FileLike::write(&socket, str.as_bytes());
+    println!("send: EOF"); 
+    info!("write error <= {:?}", result_write);
 }
 
 #[allow(dead_code)]
