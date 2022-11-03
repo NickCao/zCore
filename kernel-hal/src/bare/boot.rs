@@ -19,10 +19,10 @@ hal_fn_impl! {
             super::arch::primary_init_early();
         }
 
-        fn primary_init() {
+        fn primary_init(ip_index: usize) {
             info!("Primary CPU {} init...", crate::cpu::cpu_id());
             unsafe { trapframe::init() };
-            super::arch::primary_init();
+            super::arch::primary_init(ip_index);
         }
 
         fn secondary_init() {

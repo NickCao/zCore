@@ -49,18 +49,19 @@ async fn test_connect() {
     let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
     println!("done set_flags"); 
     let endpoint = Endpoint::Ip(IpEndpoint::new(
-        IpAddress::v4(10,0,2,15),
+        IpAddress::v4(10,0,2,16),
         1234,
     ));
     println!("done ip set"); 
     let _result_connect = socket.connect(endpoint).await;
-    let str = "hello";
+    let str = "hello\r\n";
     let result_write = FileLike::write(&socket, str.as_bytes());
     println!("done send hello"); 
-    let mut data = [0u8; 32];
+    // let mut data = [0u8; 100];
     info!("<= {:?}", result_write);
-    let _result_read = FileLike::read(&socket, &mut data).await;
-    println!("{}", String::from_utf8(data.to_vec()).unwrap());
+    loop{}
+    // let _result_read = FileLike::read(&socket, &mut data).await;
+    // println!("{}", String::from_utf8(data.to_vec()).unwrap());
 }
 
 #[allow(dead_code)]
@@ -84,13 +85,15 @@ async fn test_bind() {
         panic!("not OK");
     };
     println!("{:?}", endpoint);
-    let mut data = [0u8; 32];
-    let read_file = re_ac.clone();
-    let _result_read = FileLike::read(& *read_file, &mut data).await;
+    println!("{:?}", re_ac); //
+    let mut data = [0u8; 100];
+    let result_read = re_ac.read(&mut data).await;
+    println!("{:?}", result_read);
     println!("{}", String::from_utf8(data.to_vec()).unwrap());
-    let str = "world";
-    let _result_write = FileLike::write(& *read_file, str.as_bytes());
-    println!("done send world"); 
+    loop{}
+    // let str = "world";
+    // let _result_write = FileLike::write(& *re_ac, str.as_bytes());
+    // println!("done send world"); 
 }
 
 fn primary_main(config: kernel_hal::KernelConfig) {
@@ -102,7 +105,7 @@ fn primary_main(config: kernel_hal::KernelConfig) {
     logging::set_max_level(&options.log_level);
     info!("Boot options: {:#?}", options);
     memory::init_frame_allocator(&kernel_hal::mem::free_pmem_regions());
-    kernel_hal::primary_init();
+    kernel_hal::primary_init(options.ip_index);
     STARTED.store(true, Ordering::SeqCst);
     if options.ip_index > 0 {
         if options.ip_index == 1 {

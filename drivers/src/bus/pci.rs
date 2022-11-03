@@ -161,7 +161,7 @@ unsafe fn enable(loc: Location, paddr: u64) -> Option<usize> {
     assigned_irq
 }
 
-pub fn init_driver(dev: &PCIDevice, mapper: &Option<Arc<dyn IoMapper>>) -> DeviceResult<Device> {
+pub fn init_driver(dev: &PCIDevice, mapper: &Option<Arc<dyn IoMapper>>, ip_index: usize) -> DeviceResult<Device> {
     let name = format!("enp{}s{}f{}", dev.loc.bus, dev.loc.device, dev.loc.function);
     match (dev.id.vendor_id, dev.id.device_id) {
         (0x8086, 0x100e) | (0x8086, 0x100f) | (0x8086, 0x10d3) => {
@@ -187,7 +187,7 @@ pub fn init_driver(dev: &PCIDevice, mapper: &Option<Arc<dyn IoMapper>>) -> Devic
                     irq.unwrap_or(0),
                     vaddr,
                     len as usize,
-                    0,
+                    ip_index,
                 )?));
                 return Ok(dev);
             }
@@ -264,7 +264,7 @@ pub fn detach_driver(_loc: &Location) -> bool {
     false
 }
 
-pub fn init(mapper: Option<Arc<dyn IoMapper>>) -> DeviceResult<Vec<Device>> {
+pub fn init(mapper: Option<Arc<dyn IoMapper>>, ip_index: usize) -> DeviceResult<Vec<Device>> {
     let mapper_driver = if let Some(m) = mapper {
         m.query_or_map(PCI_BASE, PAGE_SIZE * 256 * 32 * 8);
         Some(m)
@@ -289,7 +289,7 @@ pub fn init(mapper: Option<Arc<dyn IoMapper>>) -> DeviceResult<Vec<Device>> {
             dev.pic_interrupt_line,
             dev.interrupt_pin,
         );
-        let res = init_driver(&dev, &mapper_driver);
+        let res = init_driver(&dev, &mapper_driver, ip_index);
         match res {
             Ok(d) => dev_list.push(d),
             Err(e) => warn!(

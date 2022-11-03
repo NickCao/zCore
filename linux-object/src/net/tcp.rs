@@ -79,12 +79,12 @@ impl Socket for TcpSocketState {
             let sets = get_sockets();
             let mut sets = sets.lock();
             let mut socket = sets.get::<TcpSocket>(inner.handle.0);
-
             let copied_len = socket.recv_slice(data);
+            info!("data: {:?}",data);
             // avoid deadlock in poll_ifaces()
             drop(socket);
             drop(sets);
-
+            info!("copied_len: {:?}",copied_len);
             match copied_len {
                 Ok(0) | Err(smoltcp::Error::Exhausted) => {
                     poll_ifaces();

@@ -11,4 +11,4 @@ cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 cli.connect((connect_ip,connect_port))
 
-cli.send(b"hello world")
+cli.send(b"hello")

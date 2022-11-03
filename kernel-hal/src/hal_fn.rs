@@ -21,7 +21,7 @@ hal_fn_def! {
         pub fn primary_init_early(cfg: KernelConfig, handler: &'static impl KernelHandler) {}
 
         /// The main part of the primary CPU initialization.
-        pub fn primary_init();
+        pub fn primary_init(ip_index: usize);
 
         /// Initialize the secondary CPUs.
         pub fn secondary_init() {}

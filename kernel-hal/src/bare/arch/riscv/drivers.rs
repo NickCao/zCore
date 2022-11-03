@@ -48,7 +48,7 @@ impl IoMapper for IoMapperImpl {
 }
 
 /// Initialize device drivers.
-pub(super) fn init() -> DeviceResult {
+pub(super) fn init(ip_index: usize) -> DeviceResult {
     // prase DTB and probe devices
     let dev_list =
         DevicetreeDriverBuilder::new(phys_to_virt(crate::KCONFIG.dtb_paddr), IoMapperImpl)?
@@ -70,7 +70,7 @@ pub(super) fn init() -> DeviceResult {
     {
         use alloc::sync::Arc;
         use zcore_drivers::bus::pci;
-        let pci_devs = pci::init(Some(Arc::new(IoMapperImpl)))?;
+        let pci_devs = pci::init(Some(Arc::new(IoMapperImpl)), ip_index)?;
         for d in pci_devs.into_iter() {
             drivers::add_device(d);
         }

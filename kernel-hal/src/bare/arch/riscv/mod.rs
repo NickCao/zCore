@@ -52,9 +52,9 @@ pub fn primary_init_early() {
     }
 }
 
-pub fn primary_init() {
+pub fn primary_init(ip_index: usize) {
     vm::init();
-    drivers::init().unwrap();
+    drivers::init(ip_index).unwrap();
 }
 
 pub fn timer_init() {
