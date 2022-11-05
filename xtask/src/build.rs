@@ -144,7 +144,7 @@ impl QemuArgs {
             // .args(&["-netdev", "user,id=net1,hostfwd=tcp::1234-10.0.2.16:1234"])
             // .args(&["-netdev", "vde,id=net1,sock=/tmp/myswitch"])
             .args(&["-device", "e1000e,netdev=net1"])
-            .args(&["-object", "filter-dump,id=f1,netdev=net1,file=dump.dat"])
+            // .args(&["-object", "filter-dump,id=f1,netdev=net1,file=dump.dat"])
             .optional(&self.smp, |qemu, smp| {
                 qemu.args(&["-smp", &smp.to_string()]);
             });

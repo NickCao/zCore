@@ -1,21 +1,15 @@
 #![cfg_attr(not(feature = "libos"), no_std)]
-#![deny(warnings)]
+// #![deny(warnings)]
 #![no_main]
 #![feature(naked_functions, asm_sym, asm_const)]
 #![feature(default_alloc_error_handler)]
 
 use core::sync::atomic::{AtomicBool, Ordering};
 // use linux_object::error::SysResult;
+use linux_object::error::LxError;
 use linux_object::net::{
-    SocketType,
-    TcpSocketState,
-    SOCKET_TYPE_MASK,
-    Endpoint,
-    Socket,
+    DistriComm,
 };
-use linux_object::fs::{FileLike, OpenFlags};
-use smoltcp::wire::IpEndpoint;
-use smoltcp::wire::IpAddress;
 // use alloc::sync::Arc;
 use alloc::string::String;
 
@@ -43,68 +37,173 @@ static STARTED: AtomicBool = AtomicBool::new(false);
 static MOCK_CORE: AtomicBool = AtomicBool::new(false);
 
 #[allow(dead_code)]
+async fn test_comm() {
+    println!("test communication:"); 
+    let comm = DistriComm::new();
+    let result_connect = comm.connect().await;
+
+    // non block
+    let _result_set_flags = comm.set_nonblock();
+
+    // block
+    // let _result_set_flags = comm.set_block();
+    
+    println!("connect result <= {:?}", result_connect);
+    if let Some(id) = comm.getid() {
+        println!("my id is {}", id);
+        if id & 1 == 0 {
+            let mut source_id = 0;
+            let mut recv_data = [0u8; 100];
+
+            // non block poll mode
+            loop {
+                let recv_result = comm.recv(&mut source_id, &mut recv_data).await;
+                match recv_result {
+                    Ok(len) => {
+                        println!("recv {} {}", source_id, String::from_utf8(recv_data[0..len].to_vec()).unwrap());
+                        break;
+                    }
+                    Err(LxError::EAGAIN) => {
+                        // poll for non block
+                        // info!("poll for nonblock");
+                    }
+                    Err(e) => { 
+                        println!("{:?}",e);
+                        break;
+                    }
+                }
+            }
+
+            // block mode
+            // if let Ok(len) = comm.recv(&mut source_id, &mut recv_data).await {
+            //     println!("recv {} {}", source_id, String::from_utf8(recv_data[0..len].to_vec()).unwrap());
+            // } else {
+            //     println!("error");
+            // }
+
+            let send_data = "world";
+            println!("send {} {}", id ^ 1, send_data);
+            let result_send = comm.send(id ^ 1, send_data.as_bytes());
+            warn!("send result<= {:?}", result_send);
+            
+        } else {
+            let send_data = "hello";
+            println!("send {} {}", id ^ 1, send_data);
+            let result_send = comm.send(id ^ 1, send_data.as_bytes());
+            warn!("send result<= {:?}", result_send);
+            let mut source_id = 0;
+            let mut recv_data = [0u8; 100];
+            // non block poll mode
+            loop {
+                let recv_result = comm.recv(&mut source_id, &mut recv_data).await;
+                match recv_result {
+                    Ok(len) => {
+                        println!("recv {} {}", source_id, String::from_utf8(recv_data[0..len].to_vec()).unwrap());
+                        break;
+                    }
+                    Err(LxError::EAGAIN) => {
+                        // poll for non block
+                        // info!("poll for nonblock");
+                }
+                    Err(e) => { 
+                        println!("{:?}",e);
+                        break;
+                    }
+                }
+            }
+
+            // block mode
+            // if let Ok(len) = comm.recv(&mut source_id, &mut recv_data).await {
+            //     println!("recv {} {}", source_id, String::from_utf8(recv_data[0..len].to_vec()).unwrap());
+            // } else {
+            //     println!("no recv");
+            // }
+        }
+    } else {
+        println!("no id");
+    }
+    let disconnect_result = comm.disconnect();
+    warn!("disconnect result <= {:?}", disconnect_result);
+}
+
+
+#[allow(dead_code)]
 async fn test_connect() {
-    println!("test connect:"); 
-    let socket: TcpSocketState = TcpSocketState::new();
-    // let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
-    // println!("done set_flags"); 
-    let endpoint = Endpoint::Ip(IpEndpoint::new(
-        IpAddress::v4(10,0,2,16),
-        1234,
-    ));
-    println!("done ip set"); 
-    let _result_connect = socket.connect(endpoint).await;
-    let str = "hello";
-    let result_write = FileLike::write(&socket, str.as_bytes());
-    println!("send: hello"); 
-    info!("write error<= {:?}", result_write);
-    let mut data = [0u8; 100];
-    let _result_read = FileLike::read(&socket, &mut data).await;
-    println!("recv: {}", String::from_utf8(data.to_vec()).unwrap());
-    let str = "hello";
-    let result_write = FileLike::write(&socket, str.as_bytes());
-    println!("send: hello"); 
-    info!("write error <= {:?}", result_write);
-    let mut data = [0u8; 100];
-    let result_read = FileLike::read(&socket, &mut data).await;
-    println!("read error <= {:?}", result_read);
-    println!("recv: {}", String::from_utf8(data.to_vec()).unwrap());
-    let str = "EOF";
-    let result_write = FileLike::write(&socket, str.as_bytes());
-    println!("send: EOF"); 
-    info!("write error <= {:?}", result_write);
+    println!("test connection:"); 
+    let comm = DistriComm::new();
+    let result_connect = comm.connect().await;
+    println!("connect result <= {:?}", result_connect);
+
+    // non block mode
+    let _result_set_flags = comm.set_nonblock();
+
+    // block mode
+    // let _result_set_flags = comm.set_block();
+    
+    if let Some(id) = comm.getid() {
+        println!("my id is {}", id);
+
+        let send_data = "test message: hello".as_bytes();
+        println!("send self {}", String::from_utf8(send_data.to_vec()).unwrap());
+
+        let result_send = comm.send(id, send_data);
+        println!("send result<= {:?}", result_send);
+        
+        let mut source_id = 0;
+        let mut recv_data = [0u8; 100];
+        // non block poll mode
+        loop {
+            let recv_result = comm.recv(&mut source_id, &mut recv_data).await;
+            match recv_result {
+                Ok(len) => {
+                    println!("recv {} {}", source_id, String::from_utf8(recv_data[0..len].to_vec()).unwrap());
+                    let mut flag: bool = len == send_data.len();
+                    for i in 0..len {
+                        if recv_data[i] != send_data[i] {
+                            flag = false;
+                        }
+                    }
+                    if flag {
+                        println!("test connection successfully");
+                    } else {
+                        panic!("test connection dead");
+                    }
+                    break;
+                }
+                Err(LxError::EAGAIN) => {
+                    // poll for non block
+                    // info!("poll for nonblock");
+                }
+                Err(e) => { 
+                    panic!("{:?}",e);
+                }
+            }
+        }
+        // block mode
+        // if let Ok(len) = comm.recv(&mut source_id, &mut recv_data).await {
+        //     println!("recv {} {}", source_id, String::from_utf8(recv_data[0..len].to_vec()).unwrap());
+        //     flag = len == send_data.len();
+        //     for i in 0..len {
+        //         if recv_data[i] != send_data[i] {
+        //             flag = false;
+        //         }
+        //     }
+        //     if flag {
+        //         println!("test connection successfully")
+        //     } else {
+        //         panic!("test connection dead");
+        //     }
+        // } else {
+        //     println!("no recv");
+        // }
+    } else {
+        panic!("no server give id");
+    }
 }
 
 #[allow(dead_code)]
 async fn test_bind() {
-    println!("test bind:"); 
-    let socket: TcpSocketState = TcpSocketState::new();
-    let _result_flags = socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK));
-    println!("done set_flags"); 
-    let endpoint = Endpoint::Ip(IpEndpoint::new(
-        IpAddress::Unspecified,
-        1234,
-    ));
-    println!("done ip set"); 
-    let _result_bind = socket.bind(endpoint);
-    println!("done bind");
-    let _result_listen = socket.listen();
-    println!("done listen");
-    let (re_ac, endpoint) = if let Ok((re_ac, endpoint)) = socket.accept().await {
-        (re_ac,endpoint)
-    } else {
-        panic!("not OK");
-    };
-    println!("{:?}", endpoint);
-    println!("{:?}", re_ac); //
-    let mut data = [0u8; 100];
-    let result_read = re_ac.read(&mut data).await;
-    println!("{:?}", result_read);
-    println!("{}", String::from_utf8(data.to_vec()).unwrap());
-    loop{}
-    // let str = "world";
-    // let _result_write = FileLike::write(& *re_ac, str.as_bytes());
-    // println!("done send world"); 
+    // todo
 }
 
 fn primary_main(config: kernel_hal::KernelConfig) {
@@ -119,11 +218,10 @@ fn primary_main(config: kernel_hal::KernelConfig) {
     kernel_hal::primary_init(options.ip_index);
     STARTED.store(true, Ordering::SeqCst);
     if options.ip_index > 0 {
-        if options.ip_index == 1 {
-            executor::spawn(test_bind());
-        } else {
-            executor::spawn(test_connect());
-        }
+        // test connection
+        executor::spawn(test_connect());
+        // test communication
+        // executor::spawn(test_comm());
     }
     cfg_if! {
         if #[cfg(all(feature = "linux", feature = "zircon"))] {

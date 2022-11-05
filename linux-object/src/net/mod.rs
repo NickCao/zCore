@@ -30,6 +30,9 @@ pub use netlink::*;
 
 // pub mod stack;
 
+pub mod distributed;
+pub use distributed::*;
+
 // ============= Socket Set =============
 use zcore_drivers::net::get_sockets;
 // lazy_static! {
