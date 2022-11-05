@@ -10,6 +10,11 @@
 
 基于 zircon 并提供 Linux 兼容性的操作系统内核。
 
+## 分布式文件
+  在rcore vfs体系下实现的跨平台分布式文件系统
+
+  https://github.com/NickCao/rcore-fs
+
 ## 原版README
   Reimplement `Zircon` microkernel in safe Rust as a userspace program!
 
