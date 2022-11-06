@@ -3,10 +3,13 @@
 
 // crate
 use crate::net::*;
+use alloc::string::ToString;
 use lock::Mutex;
 use crate::fs::{FileLike, OpenFlags};
 use rcore_fs_dfs::transport::Transport;
 use core::convert::TryInto;
+use alloc::vec::Vec;
+use alloc::collections::BTreeMap;
 
 // alloc
 use alloc::string::String;
@@ -17,6 +20,15 @@ use smoltcp::wire::IpAddress;
 
 pub struct DistriTran {
     comm: DistriComm,
+    store: Mutex<BTreeMap<u64, Vec<u8>>>,
+}
+
+impl DistriTran {
+    pub async fn new() -> Self {
+        let comm = DistriComm::new();
+        comm.connect().await.unwrap();
+        Self { comm, store: Default::default() }
+    }
 }
 
 #[allow(unused_variables)]
@@ -28,9 +40,21 @@ impl Transport for DistriTran {
         unimplemented!()
     }
     fn get(&self, nid: u64, bid: u64, buf: &mut [u8]) -> Result<usize, String> {
+        if nid == self.nid() {
+            if let Some(val) = self.store.lock().get(&bid) {
+                buf[..val.len()].copy_from_slice(&val);
+                return Ok(val.len())
+            } else {
+                return Err("bid not found".to_string())
+            }
+        }
         unimplemented!()
     }
     fn set(&self, nid: u64, bid: u64, buf: &[u8]) -> Result<(), String> {
+        if nid == self.nid() {
+            self.store.lock().insert(bid, buf.to_vec());
+            return Ok(())
+        }
         unimplemented!()
     }
     fn next(&self) -> u64 {
