@@ -5,6 +5,8 @@
 use crate::net::*;
 use lock::Mutex;
 use crate::fs::{FileLike, OpenFlags};
+use rcore_fs_dfs::transport::Transport;
+use core::convert::TryInto;
 
 // alloc
 use alloc::string::String;
@@ -12,6 +14,29 @@ use alloc::string::String;
 // smoltcp
 use smoltcp::wire::IpEndpoint;
 use smoltcp::wire::IpAddress;
+
+pub struct DistriTran {
+    comm: DistriComm,
+}
+
+#[allow(unused_variables)]
+impl Transport for DistriTran {
+    fn nid(&self) -> u64 {
+        self.comm.getid().unwrap().try_into().unwrap()
+    }
+    fn len(&self) -> u64 {
+        unimplemented!()
+    }
+    fn get(&self, nid: u64, bid: u64, buf: &mut [u8]) -> Result<usize, String> {
+        unimplemented!()
+    }
+    fn set(&self, nid: u64, bid: u64, buf: &[u8]) -> Result<(), String> {
+        unimplemented!()
+    }
+    fn next(&self) -> u64 {
+        unimplemented!()
+    }
+}
 
 /// Distributed Communication
 pub struct DistriComm {

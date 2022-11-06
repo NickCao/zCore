@@ -1098,6 +1098,7 @@ dependencies = [
  "numeric-enum-macro",
  "rcore-fs",
  "rcore-fs-devfs",
+ "rcore-fs-dfs",
  "rcore-fs-mountfs",
  "rcore-fs-ramfs",
  "rcore-fs-sfs",
