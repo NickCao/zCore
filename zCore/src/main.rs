@@ -5,12 +5,8 @@
 #![feature(default_alloc_error_handler)]
 
 use core::sync::atomic::{AtomicBool, Ordering};
-// use linux_object::error::SysResult;
-use linux_object::error::LxError;
 use linux_object::net::DistriTran;
 use rcore_fs_dfs::transport::Transport;
-// use alloc::sync::Arc;
-use alloc::string::String;
 
 extern crate alloc;
 #[macro_use]
@@ -40,6 +36,10 @@ async fn test_comm() {
     println!("test communication:"); 
     let trans = DistriTran::new().await;
     println!("id: {}", trans.nid());
+    trans.set(trans.nid(), 1, b"foo").unwrap();
+    let mut buf = alloc::vec![0u8; 4096];
+    let n = trans.get(trans.nid(), 1, &mut buf).unwrap();
+    assert_eq!(b"foo", &buf[..n]);
 }
 
 fn primary_main(config: kernel_hal::KernelConfig) {
