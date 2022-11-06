@@ -398,6 +398,7 @@ fn check_style() {
             arch: ArchArg { arch },
             debug: false,
             features: None,
+            ip: 0,
         }
         .invoke(Cargo::clippy);
     }

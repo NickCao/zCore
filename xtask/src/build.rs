@@ -11,6 +11,8 @@ pub(crate) struct BuildArgs {
     pub debug: bool,
     #[clap(long)]
     pub features: Option<String>,
+    #[clap(long)]
+    pub ip: usize,
 }
 
 #[derive(Args)]
@@ -50,6 +52,10 @@ impl BuildArgs {
     #[inline]
     fn arch(&self) -> Arch {
         self.arch.arch
+    }
+
+    fn ip(&self) -> usize {
+        self.ip
     }
 
     fn target_file_path(&self) -> PathBuf {
@@ -123,6 +129,7 @@ impl QemuArgs {
         let arch = self.build.arch();
         let arch_str = arch.name();
         let obj = self.build.target_file_path();
+        let ip = self.build.ip();
         // 递归生成内核二进制
         let bin = OutArgs {
             build: self.build,
@@ -136,7 +143,7 @@ impl QemuArgs {
             .arg(&bin)
             .arg("-initrd")
             .arg(INNER.join(format!("{arch_str}.img")))
-            .args(&["-append", "LOG=warn:IP=2"])
+            .args(&["-append", &format!("LOG=warn:IP={}", ip)])
             .args(&["-display", "none"])
             .arg("-no-reboot")
             .arg("-nographic")
