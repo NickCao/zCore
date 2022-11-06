@@ -230,6 +230,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
 
 [[package]]
+name = "bincode"
+version = "2.0.0-rc.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7bb50c5a2ef4b9b1e7ae73e3a73b52ea24b20312d629f9c4df28260b7ad2c3c4"
+dependencies = [
+ "bincode_derive",
+ "serde",
+]
+
+[[package]]
+name = "bincode_derive"
+version = "2.0.0-rc.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a45a23389446d2dd25dc8e73a7a3b3c43522b630cac068927f0649d43d719d2"
+dependencies = [
+ "virtue",
+]
+
+[[package]]
 name = "bit"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1521,6 +1540,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rcore-fs-dfs"
+version = "0.1.0"
+source = "git+https://github.com/NickCao/rcore-fs#9258454cee292a8887ad780351d86cb9b559fdd6"
+dependencies = [
+ "bincode",
+ "lock",
+ "log",
+ "rcore-fs",
+ "serde",
+]
+
+[[package]]
 name = "rcore-fs-fuse"
 version = "0.1.0"
 source = "git+https://github.com/rcore-os/rcore-fs?rev=1a3246b#1a3246b1d3754f414817d72a6217fc7b6076ff30"
@@ -2142,6 +2173,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "virtue"
+version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b60dcd6a64dd45abf9bd426970c9843726da7fc08f44cd6fcebf68c21220a63"
+
+[[package]]
 name = "void"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2481,6 +2518,7 @@ dependencies = [
  "rayboot",
  "rboot",
  "rcore-fs",
+ "rcore-fs-dfs",
  "rcore-fs-hostfs",
  "rcore-fs-sfs",
  "riscv 0.8.0",

@@ -16,3 +16,6 @@ exclude = ["zircon-user", "rboot"]
 [profile.release]
 lto = true
 debug = true
+
+[patch."git+https://github.com/NickCao/rcore-fs"]
+rcore-fs = { git = "https://github.com/rcore-os/rcore-fs", rev = "1a3246b" }
