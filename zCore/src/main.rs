@@ -33,10 +33,11 @@ static MOCK_CORE: AtomicBool = AtomicBool::new(false);
 
 #[allow(dead_code)]
 async fn test_comm() {
-    println!("test communication:"); 
+    println!("test communication:");
     let trans = DistriTran::new().await;
     println!("id: {}", trans.nid());
     trans.set(trans.nid(), 1, b"foo").unwrap();
+    trans.set(0, 2, b"foo").unwrap();
     let mut buf = alloc::vec![0u8; 4096];
     let n = trans.get(trans.nid(), 1, &mut buf).unwrap();
     assert_eq!(b"foo", &buf[..n]);
@@ -47,7 +48,7 @@ fn primary_main(config: kernel_hal::KernelConfig) {
     memory::init_heap();
     kernel_hal::primary_init_early(config, &handler::ZcoreKernelHandler);
     let options = utils::boot_options();
-    info!("IP index: {}",options.ip_index);
+    info!("IP index: {}", options.ip_index);
     logging::set_max_level(&options.log_level);
     info!("Boot options: {:#?}", options);
     memory::init_frame_allocator(&kernel_hal::mem::free_pmem_regions());

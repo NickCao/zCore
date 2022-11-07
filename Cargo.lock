@@ -1090,6 +1090,7 @@ dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
  "downcast-rs",
+ "executor",
  "hashbrown 0.9.1",
  "kernel-hal",
  "lazy_static",

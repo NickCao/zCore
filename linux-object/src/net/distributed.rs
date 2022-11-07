@@ -24,13 +24,40 @@ pub struct DistriTran {
 }
 
 impl DistriTran {
-    pub async fn new() -> Self {
+    pub async fn new() -> Arc<Self> {
         let comm = DistriComm::new();
         comm.connect().await.unwrap();
-        Self {
+        let tran = Arc::new(Self {
             comm,
             store: Default::default(),
+        });
+        {
+            let tran = tran.clone();
+            executor::spawn(async move {
+                loop {
+                    let mut source_id = 0usize;
+                    let mut data = [0u8; 4096];
+                    let len = tran.comm.recv(&mut source_id, &mut data).await.unwrap();
+
+                    let data = &data[..len];
+                    let mut op = [0u8; 8];
+                    op.copy_from_slice(&data[..8]);
+                    let op = u64::from_be_bytes(op);
+                    let data = &data[8..];
+                    match op {
+                        1 => {
+                            let mut bid = [0u8; 8];
+                            bid.copy_from_slice(&data[..8]);
+                            let bid = u64::from_be_bytes(bid);
+                            let data = &data[8..];
+                            tran.store.lock().insert(bid, data.to_vec());
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+            });
         }
+        tran
     }
 }
 
@@ -56,9 +83,14 @@ impl Transport for DistriTran {
     fn set(&self, nid: u64, bid: u64, buf: &[u8]) -> Result<(), String> {
         if nid == self.nid() {
             self.store.lock().insert(bid, buf.to_vec());
-            return Ok(());
+            Ok(())
+        } else {
+            let op = 1u64.to_be_bytes();
+            let bid = bid.to_be_bytes();
+            let buf = [&op, &bid, buf].concat();
+            self.comm.send(nid as usize, &buf).unwrap();
+            Ok(())
         }
-        unimplemented!()
     }
     fn next(&self) -> u64 {
         unimplemented!()
