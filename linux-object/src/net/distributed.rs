@@ -2,21 +2,21 @@
 // Use Tcpsocket
 
 // crate
-use crate::net::*;
-use alloc::string::ToString;
-use lock::Mutex;
 use crate::fs::{FileLike, OpenFlags};
-use rcore_fs_dfs::transport::Transport;
-use core::convert::TryInto;
-use alloc::vec::Vec;
+use crate::net::*;
 use alloc::collections::BTreeMap;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::convert::TryInto;
+use lock::Mutex;
+use rcore_fs_dfs::transport::Transport;
 
 // alloc
 use alloc::string::String;
 
 // smoltcp
-use smoltcp::wire::IpEndpoint;
 use smoltcp::wire::IpAddress;
+use smoltcp::wire::IpEndpoint;
 
 pub struct DistriTran {
     comm: DistriComm,
@@ -27,7 +27,10 @@ impl DistriTran {
     pub async fn new() -> Self {
         let comm = DistriComm::new();
         comm.connect().await.unwrap();
-        Self { comm, store: Default::default() }
+        Self {
+            comm,
+            store: Default::default(),
+        }
     }
 }
 
@@ -43,9 +46,9 @@ impl Transport for DistriTran {
         if nid == self.nid() {
             if let Some(val) = self.store.lock().get(&bid) {
                 buf[..val.len()].copy_from_slice(&val);
-                return Ok(val.len())
+                return Ok(val.len());
             } else {
-                return Err("bid not found".to_string())
+                return Err("bid not found".to_string());
             }
         }
         unimplemented!()
@@ -53,7 +56,7 @@ impl Transport for DistriTran {
     fn set(&self, nid: u64, bid: u64, buf: &[u8]) -> Result<(), String> {
         if nid == self.nid() {
             self.store.lock().insert(bid, buf.to_vec());
-            return Ok(())
+            return Ok(());
         }
         unimplemented!()
     }
@@ -69,26 +72,20 @@ pub struct DistriComm {
     inner: Mutex<DistriCommInner>,
 }
 
-/// Distributed Communication Inner 
+/// Distributed Communication Inner
 pub struct DistriCommInner {
-    /// Distributed OS id 
+    /// Distributed OS id
     id: Option<usize>,
     socket: TcpSocketState,
 }
 
 impl DistriComm {
-    pub fn new() -> Self{
-        let end_point = Endpoint::Ip(IpEndpoint::new(
-            IpAddress::v4(10,0,2,16),
-            1234,
-        ));
+    pub fn new() -> Self {
+        let end_point = Endpoint::Ip(IpEndpoint::new(IpAddress::v4(10, 0, 2, 16), 1234));
         let socket = TcpSocketState::new();
-        DistriComm { 
+        DistriComm {
             master_endpoint: end_point,
-            inner: Mutex::new(DistriCommInner {
-                id: None,
-                socket,
-            }),
+            inner: Mutex::new(DistriCommInner { id: None, socket }),
         }
     }
 
@@ -99,7 +96,9 @@ impl DistriComm {
 
     pub fn set_nonblock(&self) -> LxResult {
         let inner = self.inner.lock();
-        inner.socket.set_flags(OpenFlags::from_bits_truncate(SocketType::SOCK_NONBLOCK as usize & ! SOCKET_TYPE_MASK))
+        inner.socket.set_flags(OpenFlags::from_bits_truncate(
+            SocketType::SOCK_NONBLOCK as usize & !SOCKET_TYPE_MASK,
+        ))
     }
 
     pub fn getid(&self) -> Option<usize> {
@@ -125,7 +124,7 @@ impl DistriComm {
     pub fn disconnect(&self) -> SysResult {
         let inner = self.inner.lock();
 
-        // poll 
+        // poll
         if let Ok(status) = FileLike::poll(&inner.socket, PollEvents::OUT) {
             if !status.write {
                 return Err(LxError::EAGAIN);
@@ -141,17 +140,17 @@ impl DistriComm {
         result_write
     }
 
-    pub fn send(&self, dest_id: usize,  data: &[u8]) -> SysResult {
+    pub fn send(&self, dest_id: usize, data: &[u8]) -> SysResult {
         // max len of send data: 1024, change it if you want
         const MAX_LEN: usize = 1024;
         // check len of data
         if data.len() > MAX_LEN {
-            return Err(LxError::ENOBUFS)
+            return Err(LxError::ENOBUFS);
         }
 
         let inner = self.inner.lock();
 
-        // poll 
+        // poll
         if let Ok(status) = FileLike::poll(&inner.socket, PollEvents::OUT) {
             if !status.write {
                 return Err(LxError::EAGAIN);
@@ -175,7 +174,7 @@ impl DistriComm {
         let lb4: u8 = ((len >> 24) & 0xFF) as u8;
 
         // make head
-        let head = [b1,b2,b3,b4,lb1,lb2,lb3,lb4];
+        let head = [b1, b2, b3, b4, lb1, lb2, lb3, lb4];
 
         // make package
         const SEND_LEN: usize = MAX_LEN + 8;
@@ -203,7 +202,7 @@ impl DistriComm {
         let mut head = [0u8; 8];
         let len = FileLike::read(&inner.socket, &mut head).await?;
         if len < 8 {
-            // panic head error 
+            // panic head error
             return Err(LxError::ENOENT);
         }
         // get source id
@@ -217,8 +216,8 @@ impl DistriComm {
         data_len = (data_len << 8) | head[6] as usize;
         data_len = (data_len << 8) | head[5] as usize;
         data_len = (data_len << 8) | head[4] as usize;
-        
-        // data not enough large, lost the package 
+
+        // data not enough large, lost the package
         if data.len() < data_len {
             let mut trash = [0u8; 1024];
             while data_len != 0 {
@@ -233,7 +232,7 @@ impl DistriComm {
             return Err(LxError::ENOBUFS);
         }
 
-        // read the package 
+        // read the package
         let ret_len = data_len;
         while data_len != 0 {
             let len = FileLike::read(&inner.socket, &mut data[0..data_len]).await?;
