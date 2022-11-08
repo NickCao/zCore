@@ -33,7 +33,7 @@ impl DistriTran {
         });
         {
             let tran = tran.clone();
-            executor::spawn(async move {
+            kernel_hal::thread::spawn(async move {
                 loop {
                     let mut source_id = 0usize;
                     let mut data = [0u8; 4096];
@@ -45,6 +45,12 @@ impl DistriTran {
                     let op = u64::from_be_bytes(op);
                     let data = &data[8..];
                     match op {
+                        0 => {
+                            let mut bid = [0u8; 8];
+                            bid.copy_from_slice(&data[..8]);
+                            let bid = u64::from_be_bytes(bid);
+                            panic!("handle get request: {}", bid);
+                        }
                         1 => {
                             let mut bid = [0u8; 8];
                             bid.copy_from_slice(&data[..8]);
@@ -77,8 +83,13 @@ impl Transport for DistriTran {
             } else {
                 return Err("bid not found".to_string());
             }
+        } else {
+            let op = 0u64.to_be_bytes();
+            let bid = bid.to_be_bytes();
+            let buf = [op, bid].concat();
+            self.comm.send(nid as usize, &buf).unwrap();
+            Ok(0)
         }
-        unimplemented!()
     }
     fn set(&self, nid: u64, bid: u64, buf: &[u8]) -> Result<(), String> {
         if nid == self.nid() {

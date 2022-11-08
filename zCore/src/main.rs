@@ -31,16 +31,27 @@ static STARTED: AtomicBool = AtomicBool::new(false);
 #[cfg(all(not(any(feature = "libos")), feature = "mock-disk"))]
 static MOCK_CORE: AtomicBool = AtomicBool::new(false);
 
-#[allow(dead_code)]
 async fn test_comm() {
-    println!("test communication:");
+    println!("Communication self-test:");
     let trans = DistriTran::new().await;
-    println!("id: {}", trans.nid());
-    trans.set(trans.nid(), 1, b"foo").unwrap();
-    trans.set(0, 2, b"foo").unwrap();
+    println!("Node ID: {}", trans.nid());
+    // test set self
+    trans.set(trans.nid(), trans.nid(), b"foo").unwrap();
+    if trans.nid() != 0 {
+        // test set other
+        trans.set(0, trans.nid(), b"bar").unwrap();
+        trans.set(0, trans.nid() + 1, b"bar").unwrap();
+        trans.set(0, trans.nid() + 2, b"bar").unwrap();
+    }
+    // test get self
     let mut buf = alloc::vec![0u8; 4096];
-    let n = trans.get(trans.nid(), 1, &mut buf).unwrap();
-    assert_eq!(b"foo", &buf[..n]);
+    let len = trans.get(trans.nid(), trans.nid(), &mut buf).unwrap();
+    assert_eq!(b"foo", &buf[..len]);
+    if trans.nid() != 0 {
+        // test get other
+        let len = trans.get(0, trans.nid(), &mut buf).unwrap();
+        assert_eq!(b"bar", &buf[..len]);
+    }
 }
 
 fn primary_main(config: kernel_hal::KernelConfig) {
@@ -55,7 +66,7 @@ fn primary_main(config: kernel_hal::KernelConfig) {
     kernel_hal::primary_init(options.ip_index);
     STARTED.store(true, Ordering::SeqCst);
     if options.ip_index > 0 {
-        executor::spawn(test_comm());
+        kernel_hal::thread::spawn(test_comm());
     }
     cfg_if! {
         if #[cfg(all(feature = "linux", feature = "zircon"))] {
