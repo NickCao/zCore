@@ -32,10 +32,18 @@ impl DistriTran {
             let store = store.clone();
             kernel_hal::thread::spawn(async move {
                 comm.connect().await.unwrap();
+                comm.set_nonblock().unwrap();
                 loop {
                     let mut source_id = 0usize;
                     let mut data = [0u8; 4096];
-                    let len = comm.recv(&mut source_id, &mut data).await.unwrap();
+                    let len = match comm.recv(&mut source_id, &mut data).await {
+                        Ok(len) => len,
+                        Err(LxError::EAGAIN) => {
+                            kernel_hal::thread::yield_now().await;
+                            continue;
+                        }
+                        err => panic!("{:?}", err),
+                    };
                     let data = &data[..len];
 
                     let mut nid = [0u8; 8];
@@ -88,7 +96,9 @@ impl Transport for DistriTran {
         Ok(())
     }
     fn next(&self) -> u64 {
-        unimplemented!()
+        let mut rand = 0u64.to_ne_bytes();
+        kernel_hal::rand::fill_random(&mut rand);
+        u64::from_ne_bytes(rand)
     }
 }
 
