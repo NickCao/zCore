@@ -143,7 +143,7 @@ impl QemuArgs {
             .arg(&bin)
             .arg("-initrd")
             .arg(INNER.join(format!("{arch_str}.img")))
-            .args(&["-append", &format!("LOG=warn:IP={}", ip)])
+            .args(&["-append", &format!("LOG=error:IP={}", ip)])
             .args(&["-display", "none"])
             .arg("-no-reboot")
             .arg("-nographic")
