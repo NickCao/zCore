@@ -1544,7 +1544,7 @@ dependencies = [
 [[package]]
 name = "rcore-fs-dfs"
 version = "0.1.0"
-source = "git+https://github.com/NickCao/rcore-fs#9258454cee292a8887ad780351d86cb9b559fdd6"
+source = "git+https://github.com/NickCao/rcore-fs#a7884ccf200f0e73290c4a05feb8971f0071bc02"
 dependencies = [
  "bincode",
  "lock",
