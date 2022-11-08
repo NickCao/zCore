@@ -15,6 +15,7 @@ class ServerOS(object):
 
     def start_server(self):
         with self.tcp_socket as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((self.bind_ip, self.bind_port))
             # 最大监听操作系统数量
             sock.listen(15)
