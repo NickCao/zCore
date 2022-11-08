@@ -19,51 +19,40 @@ use smoltcp::wire::IpAddress;
 use smoltcp::wire::IpEndpoint;
 
 pub struct DistriTran {
-    comm: DistriComm,
-    store: Mutex<BTreeMap<u64, Vec<u8>>>,
+    comm: Arc<DistriComm>,
+    store: Arc<Mutex<BTreeMap<(u64, u64), Vec<u8>>>>,
 }
 
 impl DistriTran {
-    pub async fn new() -> Arc<Self> {
-        let comm = DistriComm::new();
-        comm.connect().await.unwrap();
-        let tran = Arc::new(Self {
-            comm,
-            store: Default::default(),
-        });
+    pub fn new() -> Self {
+        let comm = Arc::new(DistriComm::new());
+        let store: Arc<Mutex<BTreeMap<(u64, u64), Vec<u8>>>> = Default::default();
         {
-            let tran = tran.clone();
+            let comm = comm.clone();
+            let store = store.clone();
             kernel_hal::thread::spawn(async move {
+                comm.connect().await.unwrap();
                 loop {
                     let mut source_id = 0usize;
                     let mut data = [0u8; 4096];
-                    let len = tran.comm.recv(&mut source_id, &mut data).await.unwrap();
-
+                    let len = comm.recv(&mut source_id, &mut data).await.unwrap();
                     let data = &data[..len];
-                    let mut op = [0u8; 8];
-                    op.copy_from_slice(&data[..8]);
-                    let op = u64::from_be_bytes(op);
+
+                    let mut nid = [0u8; 8];
+                    nid.copy_from_slice(&data[..8]);
+                    let nid = u64::from_be_bytes(nid);
                     let data = &data[8..];
-                    match op {
-                        0 => {
-                            let mut bid = [0u8; 8];
-                            bid.copy_from_slice(&data[..8]);
-                            let bid = u64::from_be_bytes(bid);
-                            panic!("handle get request: {}", bid);
-                        }
-                        1 => {
-                            let mut bid = [0u8; 8];
-                            bid.copy_from_slice(&data[..8]);
-                            let bid = u64::from_be_bytes(bid);
-                            let data = &data[8..];
-                            tran.store.lock().insert(bid, data.to_vec());
-                        }
-                        _ => unreachable!(),
-                    }
+
+                    let mut bid = [0u8; 8];
+                    bid.copy_from_slice(&data[..8]);
+                    let bid = u64::from_be_bytes(bid);
+                    let data = &data[8..];
+
+                    store.lock().insert((nid, bid), data.to_vec());
                 }
             });
         }
-        tran
+        Self { comm, store }
     }
 }
 
@@ -73,35 +62,30 @@ impl Transport for DistriTran {
         self.comm.getid().unwrap().try_into().unwrap()
     }
     fn len(&self) -> u64 {
-        unimplemented!()
+        3
     }
     fn get(&self, nid: u64, bid: u64, buf: &mut [u8]) -> Result<usize, String> {
-        if nid == self.nid() {
-            if let Some(val) = self.store.lock().get(&bid) {
-                buf[..val.len()].copy_from_slice(&val);
-                return Ok(val.len());
-            } else {
-                return Err("bid not found".to_string());
-            }
+        if let Some(val) = self.store.lock().get(&(nid, bid)) {
+            buf[..val.len()].copy_from_slice(&val);
+            return Ok(val.len());
         } else {
-            let op = 0u64.to_be_bytes();
-            let bid = bid.to_be_bytes();
-            let buf = [op, bid].concat();
-            self.comm.send(nid as usize, &buf).unwrap();
-            Ok(0)
+            return Err("bid not found".to_string());
         }
     }
     fn set(&self, nid: u64, bid: u64, buf: &[u8]) -> Result<(), String> {
-        if nid == self.nid() {
-            self.store.lock().insert(bid, buf.to_vec());
-            Ok(())
-        } else {
-            let op = 1u64.to_be_bytes();
-            let bid = bid.to_be_bytes();
-            let buf = [&op, &bid, buf].concat();
-            self.comm.send(nid as usize, &buf).unwrap();
-            Ok(())
+        self.store.lock().insert((nid, bid), buf.to_vec());
+        for id in 0..self.len() {
+            if id == self.nid() {
+                continue;
+            }
+            self.comm
+                .send(
+                    id as usize,
+                    &[&nid.to_be_bytes(), &bid.to_be_bytes(), buf].concat(),
+                )
+                .unwrap();
         }
+        Ok(())
     }
     fn next(&self) -> u64 {
         unimplemented!()

@@ -24,6 +24,7 @@ pub fn mock_block() -> mock::MockBlock {
 }
 
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
+use rcore_fs_dfs::DFS;
 use core::convert::TryFrom;
 
 use async_trait::async_trait;
@@ -39,7 +40,7 @@ use rcore_fs_mountfs::MountFS;
 use rcore_fs_ramfs::RamFS;
 use zircon_object::{object::KernelObject, vm::VmObject};
 
-use crate::error::{LxError, LxResult};
+use crate::{error::{LxError, LxResult}, net::DistriTran};
 use crate::net::Socket;
 use crate::process::LinuxProcess;
 use devfs::RandomINode;
@@ -210,6 +211,13 @@ pub fn create_root_fs(rootfs: Arc<dyn FileSystem>) -> Arc<dyn INode> {
             .expect("failed to mkdir /tmp")
     });
     tmp.mount(ramfs).expect("failed to mount RamFS");
+
+    let dfs = DFS::new(Arc::new(DistriTran::new()));
+    let share = root.find(true, "share").unwrap_or_else(|_| {
+        root.create("share", FileType::Dir, 0o666)
+            .expect("failed to mkdir /share")
+    });
+    share.mount(dfs).expect("failed to mount DFS");
 
     root
 }
