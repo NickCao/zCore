@@ -124,6 +124,29 @@
 \end{block}
 \end{frame}
 
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Filesystem}
+\begin{block}{FUSE}
+  rcore\_fs\_dfs::transport::loopback::LoopbackTransport \\
+  point-to-point RPC-style TCP transport \\
+\end{block}
+\begin{block}{zCore}
+  linux\_object::net::DistriTran \\
+  Broadcast TCP transport with rendezvous point \\
+\end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Future works}
+  \begin{itemize}
+    \item address consistency issues with locking primitives
+    \item implement more fileystem operations
+    \item automatic rebalance and migration of blocks
+  \end{itemize}
+\end{frame}
+
 \section{}
 \frame{\titlepage}
 \end{document}
