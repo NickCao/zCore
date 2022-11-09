@@ -1,0 +1,101 @@
+\documentclass{ctexbeamer}
+
+\usetheme{Berkeley}
+
+\title{Distributed Filesystem}
+
+\author{曹隽诚 \and 李晋}
+\date{2022年11月9日}
+
+\begin{document}
+\frame{\titlepage}
+
+\section{Introduction}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{NFS}
+\begin{exampleblock}{NFS}
+  mount -t nfs master:/mnt /mnt
+\end{exampleblock}
+\begin{alertblock}{Distributed or just Remote}
+  NFS is a remote filesystem, not necessarily a distributed one
+\end{alertblock}
+\begin{quotation}
+  NFS does not support aggregating the storage resources on multiple systems into a virtual storage pool, instead it only allows accessing remote sotrage resources in a transparent way.
+\end{quotation}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{GlusterFS}
+\begin{exampleblock}{GlusterFS}
+  gluster volume create gv replica 2 node0:/data node1:/data
+\end{exampleblock}
+\begin{quotation}
+  Just like on NFS, we see an identical filesystem tree on all participating nodes, but unlike on NFS where all files are located on master, they are distributed or replicated among all nodes.
+\end{quotation}
+\end{frame}
+
+\section{Design}
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Communication}
+\begin{block}{Requirement}
+  A reliable transport for supporting a distributed filesystem
+\end{block}
+\begin{exampleblock}{Choices}
+  \begin{itemize}
+    \item stream
+    \item message
+    \item RMA (Remote \emph{Memory} Access)
+  \end{itemize}
+\end{exampleblock}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Communication}
+\begin{verse}
+  Do not communicate by sharing memory; instead, share memory by communicating.
+\end{verse}
+\begin{block}{stream}
+  Explicit connections and states
+\end{block}
+\begin{block}{message}
+  Asynchronous and full of callbacks
+\end{block}
+\begin{exampleblock}{RMA}
+  RDMA with an optional D
+\end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Distributed Filesystem}
+\framesubtitle{RMA}
+  \begin{exampleblock}{RMA}
+    Effective to implement on modern infrastructures with RDMA \\
+    Gracefully fallbacks to stream or message without code change \\
+    Naturally maps to NVME-like storage technologies \\
+  \end{exampleblock}
+  \begin{block}{Addressing}
+    \begin{small}
+    \begin{verbatim}
+    0         63         127
+    | node id | block id | \end{verbatim}
+    \end{small}
+  \end{block}
+  \begin{block}{Operation}
+    \begin{itemize}
+       \item read
+       \item write 
+       \item discard
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{Impl}
+
+\section{}
+\frame{\titlepage}
+\end{document}
