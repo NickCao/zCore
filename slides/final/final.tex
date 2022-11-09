@@ -126,7 +126,7 @@
 
 \begin{frame}
 \frametitle{Distributed Filesystem}
-\framesubtitle{Filesystem}
+\framesubtitle{Transport}
 \begin{block}{FUSE}
   rcore\_fs\_dfs::transport::loopback::LoopbackTransport \\
   point-to-point RPC-style TCP transport \\
@@ -135,6 +135,22 @@
   linux\_object::net::DistriTran \\
   Broadcast TCP transport with rendezvous point \\
 \end{block}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Topology}
+\begin{figure}
+  \includegraphics[width=\textwidth]{./images/image2.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Topology}
+\begin{figure}
+  \includegraphics[width=\textwidth]{./images/image1.png}
+\end{figure}
 \end{frame}
 
 \begin{frame}

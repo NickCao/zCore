@@ -2,3 +2,5 @@
 !.gitignore
 !*.tex
 !*.pdf
+!*.png
+!images
