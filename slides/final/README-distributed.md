@@ -83,7 +83,7 @@ qemu-system-riscv64 -netdev help
 
 如果存在vde选项则支持，否则不支持。
 
-3. 如果不支持，则需要重新安装一个打开--enable-vde编译开关的qemu，见官网https://www.qemu.org/download/，运行时增加编译选项
+3. 如果不支持，则需要重新安装一个打开--enable-vde编译开关的qemu，见官网https://www.qemu.org/download/ ，运行时增加编译选项
 
 ```
 ./configure --enable-vde
