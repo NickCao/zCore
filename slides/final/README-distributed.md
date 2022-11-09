@@ -1,6 +1,6 @@
 对分布式操作系统内核提供接口的网络框架
 
-##接口说明
+## 接口说明
 
 详见linux-object/src/net/distributed.rs
 
@@ -10,7 +10,7 @@
 - getid()：获取本机在分布式结构中的唯一标识id
 - disconnect()：断开与master的连接
 - set_block&set_nonblock：设置接受消息为阻塞&非阻塞模式。
--  send(dest_id: usize, data: &[u8]) -> SysResult : 给标识为dest_id的操作系统内核发送data消息，返回运行结果
+- send(dest_id: usize, data: &[u8]) -> SysResult : 给标识为dest_id的操作系统内核发送data消息，返回运行结果
 - recv(source_id: &mut usize, data: &mut [u8]) -> SysResult : 接受一条消息，获得消息来源source_id以及消息内容data，返回运行结果。
 
 ## 网络拓扑及环境配置
@@ -19,7 +19,7 @@
 
 这是目前zCore支持的拓扑结构，见下图：
 
-![image1](.\images\image1.png)
+![image1](https://github.com/NickCao/zCore/blob/master/slides/final/images/image1.png)
 
 网卡配置：
 
@@ -43,7 +43,7 @@ cargo qemu --arch=riscv64
 
 使用VDE工具模拟交换机，实现网络拓扑如下图：
 
-![image2](.\images\image2.png)
+![image2](https://github.com/NickCao/zCore/blob/master/slides/final/images/image2.png)
 
 VDE工具文档见：https://github.com/virtualsquare/vde-2
 
