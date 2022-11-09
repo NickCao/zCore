@@ -94,7 +94,35 @@
   \end{block}
 \end{frame}
 
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Filesystem}
+  \begin{exampleblock}{RMA}
+    Effectively, a distributed virtual block device \\
+    Simply, run an existing filesytem atop
+  \end{exampleblock}
+  \begin{alertblock}{Locality}
+    Normal filesystems have no idea of the distributed natual of the underlying block device, resulting in poor locality and poor performance
+  \end{alertblock}
+  \begin{block}{Bottomline}
+    Preferably allocate blocks where they are created
+  \end{block}
+\end{frame}
+
 \section{Impl}
+\begin{frame}
+\frametitle{Distributed Filesystem}
+\framesubtitle{Filesystem}
+\begin{verse}
+  A Tale of Two Traits
+\end{verse}
+\begin{block}{rcore\_fs::vfs::FileSystem}
+  Allows a single filesystem implementation to be used in rCore, zCore and fuse
+\end{block}
+\begin{block}{rcore\_fs\_dfs::transport::Transport}
+  Allows the distributed filesystem to function reguardless of the underlying network and storage implementation
+\end{block}
+\end{frame}
 
 \section{}
 \frame{\titlepage}
